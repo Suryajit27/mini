@@ -157,6 +157,7 @@ def rightframe(arr):
     for row in rows:
         column1_value = row[0]
         column1_string=str(column1_value)
+    box6.delete(0,END)
     box6.insert(INSERT,column1_string)
     b1=Button(f1,height=2,width=5,text="+",command=add1).place(x=370,y=110)
 
@@ -181,6 +182,7 @@ def rightframe(arr):
     for row in rows:
         column1_value = row[0]
         column1_string=str(column1_value)
+    box7.delete(0,END)
     box7.insert(INSERT,column1_string)
     b2=Button(f1,height=2,width=5,text="+",command=add2).place(x=370,y=190)
 
@@ -205,6 +207,7 @@ def rightframe(arr):
     for row in rows:
         column1_value = row[0]
         column1_string=str(column1_value)
+    box8.delete(0,END)
     box8.insert(INSERT,column1_string)
     b3=Button(f1,height=2,width=5,text="+",command=add3).place(x=370,y=270)
      
@@ -280,6 +283,7 @@ def search():
        for row in rows:
             column1_value = row[0]
             column1_string=str(column1_value)
+       box9.delete(0,END)   
        box9.insert(INSERT,column1_string)
        search_result=box9.get()
        b6=Button(f2,height=2,width=5,text="+",command=add4).place(x=543,y=270)
@@ -302,14 +306,22 @@ total=Entry(top,width=10,font=('Arial 20'))
 total.place(x=825,y=350)
 
 def add1():
+       column1_value=0
        box10.delete(0,END)
        w.append(get_latest_weight()) 
        box11.delete(0,END)
-       p.append(float(box6.get())*w[-1])
        box5.delete(0,END)
        l.append(n1.get())
+       PRODUCT = l[-1]
+       query = 'SELECT PRICE FROM fruits_veg WHERE PROD_NAME = %s'
+       cursor.execute(query, (PRODUCT,))
+       rows = cursor.fetchall()
+       for row in rows:
+            column1_value = row[0]
+       p.append(column1_value*w[-1])
        print("List: ",l)
        print("weight: ",w)
+       print("price: ",p)
        global i
        for i in l:
               box5.insert(0,i)
@@ -322,14 +334,22 @@ def add1():
     
 
 def add2():
+       column1_value=0
        box10.delete(0,END)
        w.append(get_latest_weight()) 
        box11.delete(0,END)
-       p.append(float(box7.get())*w[-1])
        box5.delete(0,END)
        l.append(n2.get())
+       PRODUCT = l[-1]
+       query = 'SELECT PRICE FROM fruits_veg WHERE PROD_NAME = %s'
+       cursor.execute(query, (PRODUCT,))
+       rows = cursor.fetchall()
+       for row in rows:
+            column1_value = row[0]
+       p.append(column1_value*w[-1])
        print("List: ",l)
        print("weight: ",w)
+       print("price: ",p)
        global i
        for i in l:
               box5.insert(0,i)
@@ -341,14 +361,22 @@ def add2():
             box11.insert(0,k)           
     
 def add3():
+       column1_value=0
        box10.delete(0,END)
        w.append(get_latest_weight()) 
        box11.delete(0,END)
-       p.append(float(box8.get())*w[-1])
        box5.delete(0,END)
        l.append(n3.get())
+       PRODUCT = l[-1]
+       query = 'SELECT PRICE FROM fruits_veg WHERE PROD_NAME = %s'
+       cursor.execute(query, (PRODUCT,))
+       rows = cursor.fetchall()
+       for row in rows:
+            column1_value = row[0]
+       p.append(column1_value*w[-1])
        print("List: ",l)
        print("weight: ",w)
+       print("price: ",p)
        global i
        for i in l:
               box5.insert(0,i)
@@ -368,6 +396,7 @@ def add4():
        l.append(n4.get())
        print("List: ",l)
        print("weight: ",w)
+       print("price: ",p)
        global i
        for i in l:
               box5.insert(0,i)
