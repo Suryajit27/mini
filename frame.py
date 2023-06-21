@@ -11,12 +11,43 @@ from PIL import Image,ImageTk
 top = Tk()
 top.geometry("1020x400")
 top.title("Automatic Weighing Machine")
-#ser = serial.Serial('COM7', 9600)
-#global float_data
-#float_data = 1.000
-#stable_counter = 0
+ser = serial.Serial('COM7', 9600)
+global float_data
+float_data = 1.000
+stable_counter = 0
 l=[]
+w=[]
+p=[]
 
+def weight_transfer_thread():
+    global current_weight
+    
+    while True:
+        # Read the weight from the weighing machine
+        while not stop_thread:
+            data = ser.readline().decode().strip()
+            
+            try:
+                float_data = float(data)
+                # Process the weight as needed
+                
+                # Update the current weight value
+                current_weight = float_data
+                
+                # Set the event to signal the availability of a new weight value
+                weight_available.set()
+                
+            except ValueError:
+                print("Unable to convert the data to a float.")
+def get_latest_weight():
+    # Wait for the weight_available event to be set
+    weight_available.wait()
+    
+    # Clear the event for future weight updates
+    weight_available.clear()
+    
+    # Return the latest weight value
+    return current_weight
 connection = mysql.connector.connect(
     host='localhost',
     port=3306,
@@ -30,7 +61,8 @@ n = 0
 counter=0
 weight_available = threading.Event()
 arr=['grapes','orange','apple']
-
+thread = threading.Thread(target=weight_transfer_thread, daemon=True)
+thread.start()
 new_model = tf.keras.models.load_model('C:\\Users\\User\\Desktop\\Fruit_Vegetable_Recognition-master\\Fruit_Vegetable_Recognition-master\\FV.h5')
 def scanobj():
     cam = cv2.VideoCapture(0)
@@ -98,23 +130,34 @@ def output(location, beam_width):
 beam_width = 3
 def scann(): 
     current_img=scanobj()
-    
     arr=output(current_img,beam_width)
     rightframe(arr)
 
 
 def rightframe(arr):
-     #image1
+    column1_string=""
+    #image1
     p1=Image.open(arr2[arr[0]])
     p1=p1.resize((70,70),Image.ANTIALIAS)
     photoimg1=ImageTk.PhotoImage(p1)
     lbl_img1=Label(image=photoimg1,background="white")
     lbl_img1.place(x=30,y=90,width=110,height=70)
-    box1=Entry(f1,textvariable=n1,font=('Arial 20'),width=13)
+    box1=Entry(f1,textvariable=n1,font=('Arial 20'),width=9,justify=CENTER)
     box1.delete(0,END)
     box1.insert(INSERT,arr[0])
     box1.config(state="disabled")
     box1.place(x=150,y=110)
+    #unit price 
+    box6=Entry(f1,font=('Arial 14'),width=5,justify=CENTER)
+    box6.place(x=300,y=110)
+    PRODUCT = arr[0]
+    query = 'SELECT PRICE FROM fruits_veg WHERE PROD_NAME = %s'
+    cursor.execute(query, (PRODUCT,))
+    rows = cursor.fetchall()
+    for row in rows:
+        column1_value = row[0]
+        column1_string=str(column1_value)
+    box6.insert(INSERT,column1_string)
     b1=Button(f1,height=2,width=5,text="+",command=add1).place(x=370,y=110)
 
     #image2
@@ -123,11 +166,22 @@ def rightframe(arr):
     photoimg2=ImageTk.PhotoImage(p2)
     lbl_img2=Label(image=photoimg2,background="white")
     lbl_img2.place(x=30,y=170,width=110,height=70)
-    box2=Entry(f1,textvariable=n2,font=('Arial 20'),width=13)
+    box2=Entry(f1,textvariable=n2,font=('Arial 20'),width=9,justify=CENTER)
     box2.delete(0,END)
     box2.insert(INSERT,arr[1])
     box2.config(state="disabled")
     box2.place(x=150,y=190)
+    #unit  price
+    box7=Entry(f1,font=('Arial 14'),width=5,justify=CENTER)
+    box7.place(x=300,y=190)
+    PRODUCT = arr[1]
+    query = 'SELECT PRICE FROM fruits_veg WHERE PROD_NAME = %s'
+    cursor.execute(query, (PRODUCT,))
+    rows = cursor.fetchall()
+    for row in rows:
+        column1_value = row[0]
+        column1_string=str(column1_value)
+    box7.insert(INSERT,column1_string)
     b2=Button(f1,height=2,width=5,text="+",command=add2).place(x=370,y=190)
 
     #image3
@@ -136,12 +190,24 @@ def rightframe(arr):
     photoimg3=ImageTk.PhotoImage(p3)
     lbl_img3=Label(image=photoimg3,background="white")
     lbl_img3.place(x=30,y=250,width=110,height=70)
-    box3=Entry(f1,textvariable=n3,font=('Arial 20'),width=13)
+    box3=Entry(f1,textvariable=n3,font=('Arial 20'),width=9,justify=CENTER)
     box3.delete(0,END)
     box3.insert(INSERT,arr[2])
     box3.config(state="disabled")
     box3.place(x=150,y=270)
+    #unit price
+    box8=Entry(f1,font=('Arial 14'),width=5,justify=CENTER)
+    box8.place(x=300,y=270)
+    PRODUCT = arr[2]
+    query = 'SELECT PRICE FROM fruits_veg WHERE PROD_NAME = %s'
+    cursor.execute(query, (PRODUCT,))
+    rows = cursor.fetchall()
+    for row in rows:
+        column1_value = row[0]
+        column1_string=str(column1_value)
+    box8.insert(INSERT,column1_string)
     b3=Button(f1,height=2,width=5,text="+",command=add3).place(x=370,y=270)
+     
 
 arr2 ={'apple':"C:/Users/User/Desktop/Fruit_Vegetable_Recognition-master/Fruit_Vegetable_Recognition-master/images1/apple.jpg",
        'banana':"C:/Users/User/Desktop/Fruit_Vegetable_Recognition-master/Fruit_Vegetable_Recognition-master/images1/banana.jpg",
@@ -171,11 +237,11 @@ arr2 ={'apple':"C:/Users/User/Desktop/Fruit_Vegetable_Recognition-master/Fruit_V
        'pineapple':"C:/Users/User/Desktop/Fruit_Vegetable_Recognition-master/Fruit_Vegetable_Recognition-master/images1/pineapple.jpg",
        'pomegranate':"C:/Users/User/Desktop/Fruit_Vegetable_Recognition-master/Fruit_Vegetable_Recognition-master/images1/pomegranate.jpg",
        'potato':"C:/Users/User/Desktop/Fruit_Vegetable_Recognition-master/Fruit_Vegetable_Recognition-master/images1/potato.jpg",
-       'raddish':"C:/Users/User/Desktop/Fruit_Vegetable_Recognition-master/Fruit_Vegetable_Recognition-master/images1/radish.jpg",
+       'radish':"C:/Users/User/Desktop/Fruit_Vegetable_Recognition-master/Fruit_Vegetable_Recognition-master/images1/radish.jpg",
        'soy beans':"C:/Users/User/Desktop/Fruit_Vegetable_Recognition-master/Fruit_Vegetable_Recognition-master/images1/soy beans.jpg",
        'spinach':"C:/Users/User/Desktop/Fruit_Vegetable_Recognition-master/Fruit_Vegetable_Recognition-master/images1/spinach.jpg",
        'sweetcorn':"C:/Users/User/Desktop/Fruit_Vegetable_Recognition-master/Fruit_Vegetable_Recognition-master/images1/sweet corn.jpg",
-       'sweetpotato':"C:/Users/User/Desktop/Fruit_Vegetable_Recognition-master/Fruit_Vegetable_Recognition-master/images1/sweet potato.jpg",
+       'sweet potato':"C:/Users/User/Desktop/Fruit_Vegetable_Recognition-master/Fruit_Vegetable_Recognition-master/images1/sweet potato.jpg",
        'tomato':"C:/Users/User/Desktop/Fruit_Vegetable_Recognition-master/Fruit_Vegetable_Recognition-master/images1/tomato.jpg",
        'turnip':"C:/Users/User/Desktop/Fruit_Vegetable_Recognition-master/Fruit_Vegetable_Recognition-master/images1/turnip.jpg",
        'watermelon':"C:/Users/User/Desktop/Fruit_Vegetable_Recognition-master/Fruit_Vegetable_Recognition-master/images1/watermelon.jpg"}
@@ -186,10 +252,13 @@ n1=StringVar()
 n2=StringVar()
 n3=StringVar()
 n4=StringVar()
-
+#box9=Entry(font=('Arial 14'),width=0,justify=CENTER)
+#box9.place(x=610,y=190)
 def search():
+       global search_result
+       search_result=""
        f2=Frame(top,bg="green",width=230,height=250).place(x=450,y=80)
-
+       column1_string=""
        #image4
        p4=Image.open(arr2[name.get()])
        p4=p4.resize((70,70),Image.ANTIALIAS)
@@ -198,12 +267,25 @@ def search():
        lbl_img4=Label(image=photoimg4,background="white")
        lbl_img4.place(x=510,y=90,width=110,height=70)
        box4=Entry(f2,textvariable=n4,font=('Arial 20'),width=9,justify=CENTER)
+       box4.delete(0,END)
        box4.insert(INSERT,name.get())
        box4.config(state="disabled")
        box4.place(x=463,y=190)
-       box9=Entry(f2,font=('Arial 20'),width=3,justify=CENTER)
+       box9=Entry(f2,font=('Arial 14'),width=5,justify=CENTER)
        box9.place(x=610,y=190)
-       b4=Button(f2,height=2,width=5,text="+",command=add4).place(x=543,y=270)
+       PRODUCT = box4.get()
+       query = 'SELECT PRICE FROM fruits_veg WHERE PROD_NAME = %s'
+       cursor.execute(query, (PRODUCT,))
+       rows = cursor.fetchall()
+       for row in rows:
+            column1_value = row[0]
+            column1_string=str(column1_value)
+       box9.insert(INSERT,column1_string)
+       search_result=box9.get()
+       b6=Button(f2,height=2,width=5,text="+",command=add4).place(x=543,y=270)
+def calculate():
+     totalprice=sum(p)
+     total.insert(INSERT,str(totalprice))
 
 label1=Label(top,text="BILL",font=('Arial',20)).place(x=817,y=10)
 box5=Listbox(top,width=15,height=14,justify=CENTER)
@@ -215,41 +297,86 @@ label3=Label(top,text="WEIGHTS",font=('Arial',10)).place(x=817,y=55)
 box11=Listbox(top,width=15,height=14,justify=CENTER)
 box11.place(x=900,y=80)
 label4=Label(top,text="PRICE",font=('Arial',10)).place(x=917,y=55)
-calc=Button(top,height=2,width=15,text="TOTAL",fg="white",activeforeground="blue",background="blue").place(x=700,y=350)
+calc=Button(top,height=2,width=15,text="TOTAL",fg="white",activeforeground="blue",background="blue",command=calculate).place(x=700,y=350)
 total=Entry(top,width=10,font=('Arial 20'))
 total.place(x=825,y=350)
 
 def add1():
+       box10.delete(0,END)
+       w.append(get_latest_weight()) 
+       box11.delete(0,END)
+       p.append(float(box6.get())*w[-1])
        box5.delete(0,END)
        l.append(n1.get())
        print("List: ",l)
+       print("weight: ",w)
        global i
        for i in l:
               box5.insert(0,i)
+       global j
+       for j in w:
+            box10.insert(0,j)
+       global k
+       for k in p:
+            box11.insert(0,k)     
+    
 
 def add2():
+       box10.delete(0,END)
+       w.append(get_latest_weight()) 
+       box11.delete(0,END)
+       p.append(float(box7.get())*w[-1])
        box5.delete(0,END)
        l.append(n2.get())
        print("List: ",l)
+       print("weight: ",w)
        global i
        for i in l:
               box5.insert(0,i)
-
+       global j
+       for j in w:
+            box10.insert(0,j)  
+       global k
+       for k in p:
+            box11.insert(0,k)           
+    
 def add3():
+       box10.delete(0,END)
+       w.append(get_latest_weight()) 
+       box11.delete(0,END)
+       p.append(float(box8.get())*w[-1])
        box5.delete(0,END)
        l.append(n3.get())
        print("List: ",l)
+       print("weight: ",w)
        global i
        for i in l:
               box5.insert(0,i)
+       global j
+       for j in w:
+            box10.insert(0,j)      
+       global k
+       for k in p:
+            box11.insert(0,k)       
 
 def add4():
+       box10.delete(0,END)
+       w.append(get_latest_weight())
+       box11.delete(0,END)
+       p.append(float(search_result)*w[-1]) 
        box5.delete(0,END)
        l.append(n4.get())
        print("List: ",l)
+       print("weight: ",w)
        global i
        for i in l:
               box5.insert(0,i)
+       global j
+       for j in w:
+            box10.insert(0,j)
+       global k
+       for k in p:
+            box11.insert(0,k)             
 
 textBox = Entry(top,textvariable=name,font=('Arial 20'),width=27,highlightbackground="green",highlightthickness=2).place(x=20,y=20)
 b0=Button(top,bg="red",width=20,height=2,text="SEARCH",fg="white",activeforeground="red",command=search).place(x=450,y=20)
@@ -257,7 +384,7 @@ arr=['grapes','orange','apple']
 b4=Button(top,width=6,height=2,bg="green",text="CAM",fg="white",activeforeground="green",command=scann).place(x=625,y=20)
 
 f1=Frame(top,bg="red",width=410,height=250).place(x=20,y=80)
-
+column1_string=""
 #image1
 p1=Image.open(arr2[arr[0]])
 p1=p1.resize((70,70),Image.ANTIALIAS)
@@ -268,8 +395,17 @@ box1=Entry(f1,textvariable=n1,font=('Arial 20'),width=9,justify=CENTER)
 box1.insert(INSERT,arr[0])
 box1.config(state="disabled")
 box1.place(x=150,y=110)
-box6=Entry(f1,font=('Arial 20'),width=3,justify=CENTER)
+#unit price 
+box6=Entry(f1,font=('Arial 14'),width=5,justify=CENTER)
 box6.place(x=300,y=110)
+PRODUCT = arr[0]
+query = 'SELECT PRICE FROM fruits_veg WHERE PROD_NAME = %s'
+cursor.execute(query, (PRODUCT,))
+rows = cursor.fetchall()
+for row in rows:
+    column1_value = row[0]
+    column1_string=str(column1_value)
+box6.insert(INSERT,column1_string)
 b1=Button(f1,height=2,width=5,text="+",command=add1).place(x=370,y=110)
 
 #image2
@@ -282,8 +418,17 @@ box2=Entry(f1,textvariable=n2,font=('Arial 20'),width=9,justify=CENTER)
 box2.insert(INSERT,arr[1])
 box2.config(state="disabled")
 box2.place(x=150,y=190)
-box7=Entry(f1,font=('Arial 20'),width=3,justify=CENTER)
+#unit  price
+box7=Entry(f1,font=('Arial 14'),width=5,justify=CENTER)
 box7.place(x=300,y=190)
+PRODUCT = arr[1]
+query = 'SELECT PRICE FROM fruits_veg WHERE PROD_NAME = %s'
+cursor.execute(query, (PRODUCT,))
+rows = cursor.fetchall()
+for row in rows:
+    column1_value = row[0]
+    column1_string=str(column1_value)
+box7.insert(INSERT,column1_string)
 b2=Button(f1,height=2,width=5,text="+",command=add2).place(x=370,y=190)
 
 #image3
@@ -296,12 +441,21 @@ box3=Entry(f1,textvariable=n3,font=('Arial 20'),width=9,justify=CENTER)
 box3.insert(INSERT,arr[2])
 box3.config(state="disabled")
 box3.place(x=150,y=270)
-box8=Entry(f1,font=('Arial 20'),width=3,justify=CENTER)
+#unit price
+box8=Entry(f1,font=('Arial 14'),width=5,justify=CENTER)
 box8.place(x=300,y=270)
+PRODUCT = arr[2]
+query = 'SELECT PRICE FROM fruits_veg WHERE PROD_NAME = %s'
+cursor.execute(query, (PRODUCT,))
+rows = cursor.fetchall()
+for row in rows:
+    column1_value = row[0]
+    column1_string=str(column1_value)
+box8.insert(INSERT,column1_string)
 b3=Button(f1,height=2,width=5,text="+",command=add3).place(x=370,y=270)
 
 top.mainloop()
-#stop_thread=True
+stop_thread=True
 cursor.close()
 connection.close()
-#ser.close()
+ser.close()
